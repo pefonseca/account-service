@@ -1,5 +1,7 @@
 package com.pefonseca.account.service.domain.producer;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pefonseca.account.service.domain.dto.general.UserAccountCreatedEventDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,14 +14,20 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class UserAccountEventProducer {
 
-    private final KafkaTemplate<String, UserAccountCreatedEventDTO> kafkaTemplate;
+    private final KafkaTemplate<String, String> kafkaTemplate;
+    private final ObjectMapper objectMapper;
 
-    @Value("${kafka.topics.user-account-create}")
+    @Value("${spring.kafka.topics.user-account-created}")
     private String accountCreatedTopic;
 
-    public void publishUserAccountCreated(UserAccountCreatedEventDTO eventDTO) {
-        kafkaTemplate.send(accountCreatedTopic, eventDTO);
-        log.info("[UserAccountEventProducer] - (publishUserAccountCreated): event published: {}", eventDTO);
+    public void sendUserAccountCreated(UserAccountCreatedEventDTO event) {
+        try {
+            String payload = objectMapper.writeValueAsString(event);  // usa o ObjectMapper injetado
+            kafkaTemplate.send(accountCreatedTopic, payload);
+            log.info("Mensagem enviada ao tópico {}: {}", accountCreatedTopic, payload);
+        } catch (JsonProcessingException e) {
+            log.error("Erro ao serializar evento", e);
+        }
     }
 
 }

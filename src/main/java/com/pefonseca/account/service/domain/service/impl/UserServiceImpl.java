@@ -1,9 +1,11 @@
 package com.pefonseca.account.service.domain.service.impl;
 
+import com.pefonseca.account.service.domain.dto.general.UserAccountCreatedEventDTO;
 import com.pefonseca.account.service.domain.dto.request.BankAccountRequestDomainDTO;
 import com.pefonseca.account.service.domain.dto.request.UserRequestDomainDTO;
 import com.pefonseca.account.service.domain.dto.response.UserResponseDomainDTO;
 import com.pefonseca.account.service.domain.model.BankAccount;
+import com.pefonseca.account.service.domain.producer.UserAccountEventProducer;
 import com.pefonseca.account.service.domain.service.BankAccountService;
 import com.pefonseca.account.service.domain.service.UserService;
 import com.pefonseca.account.service.infra.repository.UserRepository;
@@ -23,6 +25,7 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository repository;
     private final BankAccountService accountService;
+    private final UserAccountEventProducer producer;
 
     @Override
     public UserResponseDomainDTO findById(UUID id) {
@@ -45,6 +48,22 @@ public class UserServiceImpl implements UserService {
                                                                          .build();
 
         var bankAccount = accountService.create(account);
+
+        var userEvent = UserAccountCreatedEventDTO.builder()
+                .userId(user.getId())
+                .name(user.getName())
+                .email(user.getEmail())
+                .phone(user.getPhone())
+                .cpf(user.getCpf())
+                .birthDate(user.getBirthDate())
+                .accountId(bankAccount.getId())
+                .agencyNumber(bankAccount.getAgencyNumber())
+                .accountNumber(bankAccount.getAccountNumber())
+                .balance(bankAccount.getBalance())
+                .createdAt(bankAccount.getCreatedAt())
+                .build();
+
+        producer.sendUserAccountCreated(userEvent);
 
         return user;
     }
