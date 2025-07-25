@@ -1,5 +1,6 @@
 package com.pefonseca.account.service.domain.dto.response;
 
+import com.pefonseca.account.service.domain.model.User;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -22,5 +23,17 @@ public class UserResponseDomainDTO {
     private String phone;
     private LocalDateTime birthDate;
     private Instant createdAt;
+
+    public User toEntity() {
+        return User.builder()
+                   .id(this.id)
+                   .name(this.name)
+                   .cpf(this.cpf)
+                   .email(this.email)
+                   .phone(this.phone)
+                   .birthDate(this.birthDate)
+                   .createdAt(this.createdAt)
+                   .build();
+    }
 
 }
